@@ -1,0 +1,112 @@
+<#
+.synopsis
+Shutdown all running VMs on Xen-center and VMWare
+.Description
+This is the script used for shutting down the VMs one time
+.Parameter Computername
+The name of the computer to check
+.example
+ps c:\users\jacob\desktop\script -computername {gc c:\users\jacob\desktop\hostlist}
+
+need following function:
+1:check hostlist
+2:check network connection
+3:
+#>
+
+[CmdletBinding()]
+param
+(
+[Parameter(mandatory=$true, Helpmessage="Please provide the hostlist path")]
+[string] $hostlist
+)
+
+function ping ()
+{}
+function shutdown()
+{}
+function close()
+{}
+
+
+
+begin
+{
+$SVMs=gc $hostlist;
+if(!$hostlist)
+    {
+        Write-Error -Message "VMs list is empty"
+        exit
+    }
+else
+{
+$i=0;
+$counts=$SVMs.count
+
+
+for($hostlist[$i]; $i -lt $counts; $i++)
+    {
+        
+        $TVMs=$SVMs[$i]
+        $pingreturnresults=(new-object system.net.networkinformation.ping).send("$TVMs").status
+    
+        switch ($pingreturnresults)
+        {
+            Success{$TVMs+=$SVMs}
+            Default{Write-Host "$SVMs unreachable"}
+        }
+    }
+
+}
+}
+
+
+
+
+
+
+
+process
+{
+        Trap {"Trap Error: $($_.Exception.Message)"; Continue}
+
+    if(!$TVMs)
+        {
+         Stop-Process -Name "*xen*" -confirm
+         stop-process -name "*vm*" -confirm
+         Write-Host "No VMs on, xencenter and vmware workstation have been closed";
+        }
+   
+              
+     else
+     {
+        Write-host "$TVMs been shutdown now"; Stop-Computer -ComputerName $TVMs -Force
+
+     }         
+              
+
+}
+
+
+end
+{
+
+    if($pingreturnresults -ne "Success")
+    {
+        Stop-Process -Name "*xen*" -force
+        Stop-process -name "*vm*" -force
+        Write-Host "XEN and VMware worksation have been closed";
+    }
+    else 
+    {
+    sleep -sec 20
+    continue;
+    }         
+
+
+}
+
+
+
+
+
