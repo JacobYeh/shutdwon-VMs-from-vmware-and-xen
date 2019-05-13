@@ -1,0 +1,38 @@
+$script:TVMs=@()
+$script:UVMs=@()
+
+
+function connection ($Computername)
+{
+    
+    for($i=0; $i -lt $Computername.count; $i++)
+    {
+                        
+          if((Test-NetConnection -ComputerName $Computername[$i] -ErrorAction SilentlyContinue -WarningAction SilentlyContinue -ErrorVariable +ErrorStore).PingSucceeded -eq "True")
+          {
+            $script:TVMs+=$Computername[$i];
+            
+            
+          }
+          else
+          {
+           $script:UVMs+=$Computername[$i];
+           
+            
+          }
+            
+
+    }
+    
+
+
+ }
+
+ 
+function shutdown($Computername)
+{
+    for($i=0;$i -lt $Computername.Count; $i++)
+    {
+    Stop-Computer -ComputerName $Computername[$i] -Force -ErrorAction SilentlyContinue -ErrorVariable +ErrorStore
+    }
+}
