@@ -1,112 +1,49 @@
 <#
 .synopsis
-Shutdown all running VMs on Xen-center and VMWare
+Shutdown all running VMs on Xen-center and VMWare and stop their process
 .Description
 This is the script used for shutting down the VMs one time
 .Parameter Computername
 The name of the computer to check
 .example
-ps c:\users\jacob\desktop\script -computername {gc c:\users\jacob\desktop\hostlist}
+ps c:\users\jacob\desktop\script -file c:\users\jacob\desktop\hostlist.txt
 
 need following function:
 1:check hostlist
 2:check network connection
-3:
+3:Shutdown the host
+4:stop VMWare workstation and Xencenter
 #>
 
 [CmdletBinding()]
 param
 (
-[Parameter(mandatory=$true, Helpmessage="Please provide the hostlist path")]
+[Parameter(mandatory=$true, Helpmessage=”Please provide the hostlist path”)]
 [string] $hostlist
 )
 
-function ping ()
-{}
-function shutdown()
-{}
-function close()
-{}
 
+cd "C:\Users\Jacob\Documents\Study\Script\Powershell\Sample\Function\"
+. .\function.ps1 | Out-Null
 
+$VMs= get-content $hostlist
 
-begin
+try
 {
-$SVMs=gc $hostlist;
-if(!$hostlist)
-    {
-        Write-Error -Message "VMs list is empty"
-        exit
-    }
-else
+connection($Computername=$VMs) | out-null
+shutdown($Computername=$Script:TVMs) | out-null
+}
+catch
 {
-$i=0;
-$counts=$SVMs.count
-
-
-for($hostlist[$i]; $i -lt $counts; $i++)
-    {
-        
-        $TVMs=$SVMs[$i]
-        $pingreturnresults=(new-object system.net.networkinformation.ping).send("$TVMs").status
-    
-        switch ($pingreturnresults)
-        {
-            Success{$TVMs+=$SVMs}
-            Default{Write-Host "$SVMs unreachable"}
-        }
-    }
-
+$errorstore
 }
-}
-
-
-
-
-
-
-
-process
-{
-        Trap {"Trap Error: $($_.Exception.Message)"; Continue}
-
-    if(!$TVMs)
-        {
-         Stop-Process -Name "*xen*" -confirm
-         stop-process -name "*vm*" -confirm
-         Write-Host "No VMs on, xencenter and vmware workstation have been closed";
-        }
-   
-              
-     else
-     {
-        Write-host "$TVMs been shutdown now"; Stop-Computer -ComputerName $TVMs -Force
-
-     }         
-              
-
-}
-
-
-end
-{
-
-    if($pingreturnresults -ne "Success")
-    {
-        Stop-Process -Name "*xen*" -force
-        Stop-process -name "*vm*" -force
-        Write-Host "XEN and VMware worksation have been closed";
-    }
-    else 
-    {
-    sleep -sec 20
-    continue;
-    }         
-
-
-}
-
-
+  
+sleep -Seconds 20
+Stop-Process -Name "*xen*","*vm*" -ErrorAction SilentlyContinue -ErrorVariable +ErrorStore
+if(!$TVMs)
+{$TVMs= "None VMs"}
+Write-Host -BackgroundColor Green "$script:TVMs been shut down `n$Script:UVMs unreachable`nXenCenter and VMWare workstation been closed"
+Write-Host -BackgroundColor Red $ErrorStore
 
 
 
